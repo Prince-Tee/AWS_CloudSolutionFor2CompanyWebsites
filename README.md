@@ -197,3 +197,281 @@ Unrestricted Access: Avoid using 0.0.0.0/0 except for public-facing services.
 Incorrect Associations: Verify that security groups are correctly associated with their respective resources.
 
 ![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/all%20our%20security%20group%20created.PNG)
+
+
+### Amazon Elastic File System (EFS) Setup
+Overview
+Amazon EFS provides scalable and fully managed Network File System (NFS) storage, ideal for shared file storage across multiple EC2 instances.
+
+Step-by-Step Setup
+Create an EFS Filesystem:
+
+Create an EFS filesystem: Navigate to; Amazon EFS -> Create file system:
+Give the Elastic File System (EFS) a name, _ Choose the VPC (Virtual Private Cloud) to deploy the EFS in,
+Click on "Create".
+(screenshot)
+
+Create an EFS mount target per AZ in the VPC, associate it with both subnets dedicated for data layer.
+NB: The amazon EFS becomes available in any subnet we specify in our mount target, and as such, we will specify that this efs be created in the private webserver subnets so that all the resources in that subnet will have the ability to mount to the file system.
+
+click on Network > manage 
+(screenshot)
+Associate the Security groups created earlier for data layer. (See the above picture for how this has been accomplished)
+
+Create Efs Access points:
+
+This is necessary to specify where the webservers would be situated/mounted on, therefore, we are going to be creating 2 mount points. One for Wordpress, the other for Tooling.
+
+Access Point for Wordpress server:
+(screenshot)
+(screenshot)
+(screenshot)
+
+Access Point for Tooling Webserver:(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+
+Overview of Access Entry
+(screenshot)
+
+### Amazon Relational Database Service (RDS) Configuration
+Overview
+Amazon RDS offers a managed relational database service, simplifying database setup, operation, and scaling.
+
+Step-by-Step Setup
+Create a KMS Key for Encryption:
+Navigate to: KMS -> Customer managed keys -> Create key and follow the configurations in the screenshot:
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+
+Create an RDS Subnet Group:
+To begin, we will start by preparing the subnets needed for setting up rds. Navigate to: RDS -> Subnet groups -> Create DB subnet group, then replicate the following configurations:
+(screenshot)
+(screenshot)
+(screenshot)
+
+Launch an RDS Instance:
+
+Navigate to: RDS -> Create database, and follow the configurations in the screenshots below:
+
+(screenshot)
+
+To fulfil our architectural structure/diagram, we will need to select either Dev/Test or Production Sample Template. Also, to minimize AWS cost, we can select the Do not create a standby instance option under Availability & durability sample template (The production template will enable Multi-AZ deployment)
+
+(screenshot)
+
+Now, Configure other settings accordingly {Leave instance configuration section as is} (For test purposes, most of the default settings are cool to be left as is). In the real world, we would need to size the database appropriately. we would need to get some information about the usage. If it is a highly transactional database that grows at 10GB weekly, we must bear that in mind while configuring the initial storage allocation, storage autoscaling, and maximum storage threshold. {user: admin, pass: G*****&}
+(screenshot)
+
+Configure VPC and security (ensure the database is not available from the Internet)
+(screenshot)
+(screenshot)
+(screenshot)
+
+Configure backups and retention
+Encrypt the database using the KMS key created earlier
+Enable CloudWatch monitoring and export Error and Slow Query logs (for production, and also Audit).
+
+(screenshot)
+(screenshot)
+
+RDS Created
+
+(Sreenshot)
+
+### Compute Resources Setup
+Base Server Configuration
+NB: To create the Autoscaling Groups, we need Launch Templates and Load Balancers. The Launch Templates requires AMI and Userdata while the Load balancer requires Target Group
+
+Provision EC2 Instances for NGINX, Bastion, and Webservers:
+
+Navigate to: EC2 -> Launch an instance, and create the ec2 instances with the specifications above (see screenshots for more context):
+(screenshot)
+(screenshot)
+(screenshot)
+
+💡 Information: Repeat the above steps to create instances for webservers and nginx servers
+(screenshot)
+
+Software Installation and Configuration
+Install Essential Software on All Servers: Make sure you install the essential softwares these in each of the above servers by running the following command;
+
+sudo yum update -y
+ sudo yum install -y   wget   vim   python3   telnet   htop   epel-release   dnf-utils
+sudo yum install -y \
+  openssl-devel \
+  cargo \
+  mysql \
+  git
+sudo systemctl start chronyd
+sudo systemctl enable chronyd
+💡 Tip: You can automate software installation using User Data scripts or configuration management tools like Ansible.
+
+I am going to do this manually in this illustration, and I will begin with the Bastion Server:
+
+(screenshot)
+(screenshot)
+(screenshot)
+
+Note: You have to also repeat the above steps for the Nginx and Webserver instances
+Note: since we configured a Bastion Host with open SSH access, restricted SSH on NIGINX and WEBSERVER EC2 instances to only allow connections from the Bastion, I transferred the PEM key to the Bastion (or you can also use SSH agent forwarding for best security pratice), and successfully accessed the Nginx and webserver ec2 instance from inside our Bastion servers via SSH
+
+NGINX Specific Configuration
+Set SELinux Policies for NGINX:
+
+sudo setsebool -P httpd_can_network_connect=1
+sudo setsebool -P httpd_can_network_connect_db=1
+sudo setsebool -P httpd_execmem=1
+sudo setsebool -P httpd_use_nfs=1
+
+(screenshot)
+💡 Best Practice: Regularly audit SELinux policies to maintain security without hindering functionality.
+
+Amazon EFS Utilities Installation
+Install EFS Utilities for Mounting EFS:
+
+git clone https://github.com/aws/efs-utils
+cd efs-utils
+sudo yum install -y make rpm-build
+sudo yum install -y linux-headers-$(uname -r)
+sudo make rpm
+sudo yum install -y ./build/amazon-efs-utils*rpm
+(screenshot)
+(screenshot)
+(screenshot)
+
+Note: Repeat the above steps for the Webservers Instance as well
+
+💡 Tip: Ensure EFS utilities are up-to-date to support the latest features and security patches.
+
+### SSL Certificate Setup
+We are using an ACM (Amazon Certificate Manager) certificate for both our external and internal load balancers. But for some reasons, we might want to add a self-signed certificate:
+
+Compliance Requirements:
+
+Certain industry regulations and standards (e.g., PCI DSS, HIPAA) require end-to-end encryption, including between internal load balancers and backend servers (within a private network). Defense in Depth:
+
+Adding another layer of security by encrypting traffic between internal load balancers and web servers can provide additional protection. When generating the certificate, In the common name, enter the private IPv4 dns of the instance (for Webserver and Nginx). We use the certificate by specifying the path to the file kos.crt and kos.key in the nginx configuration.
+
+Generate Self-Signed Certificates for NGINX and Apache:
+
+For NGINX:
+
+sudo mkdir /etc/ssl/private
+sudo chmod 700 /etc/ssl/private
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /etc/ssl/private/kos.key \
+  -out /etc/ssl/certs/kos.crt
+sudo openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
+
+Common Issues:
+
+Certificate Mismatch: Ensure certificate paths in configurations are correct.
+SELinux Denials: Verify SELinux policies allow SSL operations.
+Firewall Restrictions: Confirm that SSL ports (443) are open in security groups.
+(screenshot)
+
+Load Balancer Configuration
+External Application Load Balancer (ALB)
+Please: Before continuing with this, [create AMI's of the instances you've just created](https://github.com/Kosenuel/DevOps_CloudEngr-StegHub/tree/main/15.Cloud-Solution(AWS)-For-2-Websites-Owned-by-a-Company#create-amis-from-ec2-instances) and [Setup Target Groups](https://github.com/Kosenuel/DevOps_CloudEngr-StegHub/tree/main/15.Cloud-Solution(AWS)-For-2-Websites-Owned-by-a-Company#configure-target-groups). This would facilitate the creation of our Application Load Balancer (ALB).
+
+Configure External ALB to Route Traffic to NGINX:
+
+Now, notice that we have configured our Nginx EC2 Instances to have configurations that accepts incoming traffic only from the Load Balancers, No request should go directly to Nginx servers. With this kind of setup, we will benefit from intelligent routing of requests from the ALB to Nginx servers across the 2 Availability Zones. We will also be able to [offload](https://avinetworks.com/glossary/ssl-offload/) SSL/TLS certificates on the ALB instead of Nginx. Therefore, Nginx will be able to perform faster since it will not require extra compute resources to validate certificates for every request. So in a nutshell/recap, this is what we are going to do:
+
+Create an Internet facing ALB
+Ensure that it listens on HTTPS protocol (TCP port 443)
+Ensure the ALB is created within the appropriate VPC | AZ | Subnets
+Choose the Certificate from ACM
+Select Security Group
+Select Nginx Instances as the target group
+
+Navigate to EC2 -> Load balancers -> Create load balancer -> Application load balancer and apply the configurations like so:
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+
+
+### Internal Application Load Balancer (ALB) for Webservers
+Since the webservers are configured for auto-scaling, there is going to be a problem if servers get dynamically scalled out or in. Nginx will not know about the new IP addresses, or the ones that get removed. Hence, Nginx will not know where to direct the traffic.
+
+To solve this problem, we must use a load balancer. But this time, it will be an internal load balancer. Not Internet facing since the webservers are within a private subnet, and we do not want direct access to them.
+
+Create an Internal ALB
+Ensure that it listens on HTTPS protocol (TCP port 443)
+Ensure the ALB is created within the appropriate VPC | AZ | Subnets
+Choose the Certificate from ACM
+Select Security Group
+Select webserver Instances as the target group
+Ensure that health check passes for the target group
+Note: This process must be repeated for both WordPress and Tooling websites.
+
+Configure Internal ALB to Route Traffic to Webservers:
+
+Ensure you are Navigated to EC2 -> Load balancers -> Create load balancer -> Application load balancer, then apply the configurations like so:
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+
+💡 Tip: Use host-based routing to direct traffic to the appropriate target groups based on the requested hostname.
+
+The default target configured on the listener while creating the internal load balancer is configured to forward traffic to wordpress on port 443. Now, we need to create a rule to route traffic to tooling as well.
+
+1. Select internal load balancer from the list of load balancers created: Navigate to EC2 -> Load balancers -> "your internal load balancer"
+
+Choose the load balancer where you want to add the rule.
+(screenshot)
+
+2. Listeners Tab:
+
+Click on the Listeners tab.
+Select the listener - HTTPS:443 - and click Manage rules -> Add rule -> Add Condition -> Host header type. After configuring, click "next"
+
+(screenshot)
+
+4. Configure the Rule:
+
+Choose the appropriate target group for the hostname.
+Select the priority for the rule.
+
+(screenshot)
+(screenshot)
+
+3. Add Rules:
+
+Review and create rule.
+(screenshot)
+
+⚠️ Common Issues:
+
+SSL Certificate Errors: Ensure ACM certificates are correctly associated with ALBs.
+Routing Misconfigurations: Verify host header conditions match the intended subdomains.
+Security Group Restrictions: Confirm ALBs can communicate with their target groups.
+(screenshot)
+
+Configure Listener Rules for Internal ALB:
+The default target is WordPress. Add rules to route tooling.kosenuel.ip-ddns.com to the Tooling target group.
+
+### Compute Resources Setup
+Provision EC2 Instances for NGINX, Bastion, and Webservers
+```bash:path/to/configuration-script.sh
+#!/bin/bash
+# Example User Data Script
+sudo yum update -y
+sudo yum install -y nginx
+# Additional installation commands
