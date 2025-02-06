@@ -209,13 +209,13 @@ Create an EFS Filesystem:
 Create an EFS filesystem: Navigate to; Amazon EFS -> Create file system:
 Give the Elastic File System (EFS) a name, _ Choose the VPC (Virtual Private Cloud) to deploy the EFS in,
 Click on "Create".
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/create%20efs%20on%20aws.PNG)
 
 Create an EFS mount target per AZ in the VPC, associate it with both subnets dedicated for data layer.
 NB: The amazon EFS becomes available in any subnet we specify in our mount target, and as such, we will specify that this efs be created in the private webserver subnets so that all the resources in that subnet will have the ability to mount to the file system.
 
 click on Network > manage 
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/adding%20mount%20to%20efs%20file%20system.PNG)
 Associate the Security groups created earlier for data layer. (See the above picture for how this has been accomplished)
 
 Create Efs Access points:
@@ -223,17 +223,17 @@ Create Efs Access points:
 This is necessary to specify where the webservers would be situated/mounted on, therefore, we are going to be creating 2 mount points. One for Wordpress, the other for Tooling.
 
 Access Point for Wordpress server:
-(screenshot)
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/wordpress%20access%20entry1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/wordpress%20access%20entry2.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/wordpress%20access%20entry3.PNG)
 
-Access Point for Tooling Webserver:(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
+Access Point for Tooling Webserver:
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/tooling%20accessentry.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/tooling%20accessentry1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/tooling%20accessentry2.PNG)
 
 Overview of Access Entry
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/overview%20of%20access%20entry.PNG)
 
 ### Amazon Relational Database Service (RDS) Configuration
 Overview
@@ -242,49 +242,49 @@ Amazon RDS offers a managed relational database service, simplifying database se
 Step-by-Step Setup
 Create a KMS Key for Encryption:
 Navigate to: KMS -> Customer managed keys -> Create key and follow the configurations in the screenshot:
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/configuring%20KMS.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/configuring%20KMS1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/configuring%20KMS2.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/configuring%20KMS3.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/configuring%20KMS4.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/configuring%20KMS5.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/configuring%20KMS6.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/configuring%20KMS%20done.PNG)
 
 Create an RDS Subnet Group:
 To begin, we will start by preparing the subnets needed for setting up rds. Navigate to: RDS -> Subnet groups -> Create DB subnet group, then replicate the following configurations:
-(screenshot)
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/creating%20db%20subnet%20for%20RDS.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/creating%20db%20subnet%20for%20RDS1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/creating%20db%20subnet%20for%20RDS2.PNG)
 
 Launch an RDS Instance:
 
 Navigate to: RDS -> Create database, and follow the configurations in the screenshots below:
 
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/launch%20RDS%20MYSQL.PNG)
 
 To fulfil our architectural structure/diagram, we will need to select either Dev/Test or Production Sample Template. Also, to minimize AWS cost, we can select the Do not create a standby instance option under Availability & durability sample template (The production template will enable Multi-AZ deployment)
 
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/launch%20RDS%20MYSQL1.PNG)
 
 Now, Configure other settings accordingly {Leave instance configuration section as is} (For test purposes, most of the default settings are cool to be left as is). In the real world, we would need to size the database appropriately. we would need to get some information about the usage. If it is a highly transactional database that grows at 10GB weekly, we must bear that in mind while configuring the initial storage allocation, storage autoscaling, and maximum storage threshold. {user: admin, pass: G*****&}
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/launch%20RDS%20MYSQL2.PNG)
 
 Configure VPC and security (ensure the database is not available from the Internet)
-(screenshot)
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/launch%20RDS%20MYSQL3.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/launch%20RDS%20MYSQL4.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/launch%20RDS%20MYSQL5.PNG)
 
 Configure backups and retention
 Encrypt the database using the KMS key created earlier
 Enable CloudWatch monitoring and export Error and Slow Query logs (for production, and also Audit).
 
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/launch%20RDS%20MYSQL6.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/launch%20RDS%20MYSQL7.PNG)
 
 RDS Created
 
-(Sreenshot)
+![(Sreenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/launch%20RDS%20MYSQL8.PNG)
 
 ### Compute Resources Setup
 Base Server Configuration
@@ -293,12 +293,12 @@ NB: To create the Autoscaling Groups, we need Launch Templates and Load Balancer
 Provision EC2 Instances for NGINX, Bastion, and Webservers:
 
 Navigate to: EC2 -> Launch an instance, and create the ec2 instances with the specifications above (see screenshots for more context):
-(screenshot)
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/launch%20ec2%20instance%20with%20centos.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/launch%20ec2%20instance%20with%20centos1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/launch%20ec2%20instance%20with%20centos2.PNG)
 
 💡 Information: Repeat the above steps to create instances for webservers and nginx servers
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/launch%20ec2%20instance%20with%20centos3.PNG)
 
 Software Installation and Configuration
 Install Essential Software on All Servers: Make sure you install the essential softwares these in each of the above servers by running the following command;
@@ -316,9 +316,9 @@ sudo systemctl enable chronyd
 
 I am going to do this manually in this illustration, and I will begin with the Bastion Server:
 
-(screenshot)
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Install%20Essential%20Software%20on%20All%20Servers.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Install%20Essential%20Software%20on%20All%20Servers1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Install%20Essential%20Software%20on%20All%20Servers2.PNG)
 
 Note: You have to also repeat the above steps for the Nginx and Webserver instances
 Note: since we configured a Bastion Host with open SSH access, restricted SSH on NIGINX and WEBSERVER EC2 instances to only allow connections from the Bastion, I transferred the PEM key to the Bastion (or you can also use SSH agent forwarding for best security pratice), and successfully accessed the Nginx and webserver ec2 instance from inside our Bastion servers via SSH
@@ -331,7 +331,7 @@ sudo setsebool -P httpd_can_network_connect_db=1
 sudo setsebool -P httpd_execmem=1
 sudo setsebool -P httpd_use_nfs=1
 
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/SELinux%20Policies%20for%20NGINX.PNG)
 💡 Best Practice: Regularly audit SELinux policies to maintain security without hindering functionality.
 
 Amazon EFS Utilities Installation
@@ -343,9 +343,9 @@ sudo yum install -y make rpm-build
 sudo yum install -y linux-headers-$(uname -r)
 sudo make rpm
 sudo yum install -y ./build/amazon-efs-utils*rpm
-(screenshot)
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/EFS%20Utilities%20for%20Mounting%20EFS.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/EFS%20Utilities%20for%20Mounting%20EFS1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/EFS%20Utilities%20for%20Mounting%20EFS2.PNG)
 
 Note: Repeat the above steps for the Webservers Instance as well
 
@@ -376,9 +376,10 @@ Common Issues:
 Certificate Mismatch: Ensure certificate paths in configurations are correct.
 SELinux Denials: Verify SELinux policies allow SSL operations.
 Firewall Restrictions: Confirm that SSL ports (443) are open in security groups.
-(screenshot)
 
-Load Balancer Configuration
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Generate%20Self-Signed%20Certificates%20for%20NGINX.PNG)
+
+### Load Balancer Configuration
 External Application Load Balancer (ALB)
 Please: Before continuing with this, [create AMI's of the instances you've just created](https://github.com/Kosenuel/DevOps_CloudEngr-StegHub/tree/main/15.Cloud-Solution(AWS)-For-2-Websites-Owned-by-a-Company#create-amis-from-ec2-instances) and [Setup Target Groups](https://github.com/Kosenuel/DevOps_CloudEngr-StegHub/tree/main/15.Cloud-Solution(AWS)-For-2-Websites-Owned-by-a-Company#configure-target-groups). This would facilitate the creation of our Application Load Balancer (ALB).
 
@@ -394,13 +395,13 @@ Select Security Group
 Select Nginx Instances as the target group
 
 Navigate to EC2 -> Load balancers -> Create load balancer -> Application load balancer and apply the configurations like so:
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Create%20an%20Internet%20facing%20ALB.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Create%20an%20Internet%20facing%20ALB1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Create%20an%20Internet%20facing%20ALB2.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Create%20an%20Internet%20facing%20ALB3.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Create%20an%20Internet%20facing%20ALB4.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Create%20an%20Internet%20facing%20ALB5.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Create%20an%20Internet%20facing%20ALB6.PNG)
 
 
 ### Internal Application Load Balancer (ALB) for Webservers
@@ -420,13 +421,13 @@ Note: This process must be repeated for both WordPress and Tooling websites.
 Configure Internal ALB to Route Traffic to Webservers:
 
 Ensure you are Navigated to EC2 -> Load balancers -> Create load balancer -> Application load balancer, then apply the configurations like so:
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Configure%20Internal%20ALB.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Configure%20Internal%20ALB1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Configure%20Internal%20ALB2.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Configure%20Internal%20ALB3.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Configure%20Internal%20ALB4.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Configure%20Internal%20ALB5.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Configure%20Internal%20ALB6.PNG)
 
 💡 Tip: Use host-based routing to direct traffic to the appropriate target groups based on the requested hostname.
 
@@ -435,34 +436,34 @@ The default target configured on the listener while creating the internal load b
 1. Select internal load balancer from the list of load balancers created: Navigate to EC2 -> Load balancers -> "your internal load balancer"
 
 Choose the load balancer where you want to add the rule.
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/create%20a%20rule%20to%20route%20traffic%20to%20tooling.PNG)
 
 2. Listeners Tab:
 
 Click on the Listeners tab.
 Select the listener - HTTPS:443 - and click Manage rules -> Add rule -> Add Condition -> Host header type. After configuring, click "next"
 
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/create%20a%20rule%20to%20route%20traffic%20to%20tooling1.PNG)
 
 4. Configure the Rule:
 
 Choose the appropriate target group for the hostname.
 Select the priority for the rule.
 
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/create%20a%20rule%20to%20route%20traffic%20to%20tooling2.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/create%20a%20rule%20to%20route%20traffic%20to%20tooling3.PNG)
 
 3. Add Rules:
 
 Review and create rule.
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/create%20a%20rule%20to%20route%20traffic%20to%20tooling4.PNG)
 
 ⚠️ Common Issues:
 
 SSL Certificate Errors: Ensure ACM certificates are correctly associated with ALBs.
 Routing Misconfigurations: Verify host header conditions match the intended subdomains.
 Security Group Restrictions: Confirm ALBs can communicate with their target groups.
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/create%20a%20rule%20to%20route%20traffic%20to%20tooling5.PNG)
 
 Configure Listener Rules for Internal ALB:
 The default target is WordPress. Add rules to route tooling.kosenuel.ip-ddns.com to the Tooling target group.
