@@ -477,18 +477,17 @@ sudo yum update -y
 sudo yum install -y nginx
 # Additional installation commands
 ```
-User Data Configuration
+### user Data Configuration
 Navigate to: EC2 -> Lauch Templates -> Create Launch Template, and follow the configurations you see in the screenshot below:
 
-(screenshot)
-(screenshot)
-(Screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Created%20Lauch%20Template%20for%20Nginx.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Created%20Lauch%20Template%20for%20Nginx1.PNG)
+![(Screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Created%20Lauch%20Template%20for%20Nginx2.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Created%20Lauch%20Template%20for%20Nginx3.PNG)
 
 Repeat the above steps to create the Bastion-Template, the only thing you will have to do differently when configuring the Bastion-Template Launch Template is to set the AMI to Bastion AMI and configure the User data field differently as shown in the screenshot below:
 
-(screenshot)
-
+![screen](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Created%20Lauch%20Template%20for%20Bastion.PNG)
 WordPress User Data:
 
 Before we jump into configuring the templates for our webserver instances (Wordpress and Tooling), we have to do some home-keeping. The webserver instances needs to communicate with the database and efs, and as such we need to configure the database and make it ready to attend to such requests it is about to get without spewing out errors.
@@ -497,36 +496,36 @@ Navigate to your terminal, connect to the bastion instance, and jump from there 
 mysql -h <the end point of your rds instance> -u admin (or the name of your configured user) -p 
 Create some databases (wordpressdb and toolingdb) as shown in the screenshot:
 
-(Screenshot)
-
+![screen](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Creating%20Databases.PNG)
 Now create a user and grant this user access to the databases
 
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Creating%20Databases1.PNG)
 
 Now we are done with setting up the foundation, now Lets Create AMIs from EC2 Instances and configure our remaining Launch Template 
 
-Create AMIs from EC2 Instances
+### Create AMIs from EC2 Instances
 Create an AMI for Bastion Hosts:
 
 Navigate to `EC2 -> instances -> right-click on an instance and select Image and templates -> Create image (see screenshot for context)
 
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Bastion%20AMI.PNG)
 
 Create an AMI for NGINX Servers:
 
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/NGINX%20AMI.PNG)
 
 Create an AMI for Webservers:
 
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/weberver%20AMI.PNG)
 
 View All AMIs:
 
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/all%20AMIs.PNG)
 
 
 now it's time for configuring the Launch Template for Wordpress. Navigate to EC2 -> Launch templates -> Create launch template. Follow the steps we observed in creating the preivious lauch template, only that the AMI to use here would be your Webserver-AMI and not the Nginx-AMI we used in the 1st launch template created. Also, the user data configuration script would greatly differ this time around to look like this:
 
+```
 #!/bin/bash
 
 sudo mount -t efs -o tls,accesspoint=fsap-095eef60db83a501b fs-0dbd247de4bf9b340:/ /var/www/
@@ -562,14 +561,16 @@ sed -i "s/database_name_here/wordpressdb/g" wp-config.php
 chcon -t httpd_sys_rw_content_t /var/www/html/ -R
 
 systemctl restart httpd
+```
 ⚠️ Important: The command for attaching the mountpoint (sudo mount -t efs ...) for your specific efs can be gotten from going to Amazon EFS -> Access Points -> Your Access Point -> Attach. And also, your rds endpoint value can be gotten from going to RDS -> Databases -> Your database name -> Connectivity & Security -> Endpoint & Port -> Endpoint
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Configuring%20Launch%20Template%20for%20Wordpress.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Configuring%20Launc%20Template%20for%20Wordpress1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Configuring%20Launc%20Template%20for%20Wordpress2.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Configuring%20Launc%20Template%20for%20Wordpress3.PNG)
+
 
 ### Tooling User Data:
-
+```
 #!/bin/bash
 
 mkdir /var/www/
@@ -606,11 +607,11 @@ chcon -t httpd_sys_rw_content_t /var/www/html/ -R
 mv /etc/httpd/conf.d/welcome.conf /etc/httpd/conf.d/welcome.conf_backup
 
 systemctl restart httpd
-
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
+```
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Launch%20tooling%20template.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Launch%20tooling%20template1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Launch%20tooling%20template2.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Launch%20tooling%20template3.PNG)
 
 ### Auto Scaling Groups Configuration
  Set Up Auto Scaling Groups (ASGs)
@@ -644,8 +645,8 @@ aws autoscaling create-auto-scaling-group \
 
  Attach scaling policies as needed
 
- (screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Bastion%20Hosts%20ASG.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Bastion%20Hosts%20ASG1.PNG)
 
 NGINX ASG:
 
@@ -676,9 +677,9 @@ aws autoscaling create-auto-scaling-group \
   --health-check-grace-period 300 \
   --target-group-arns <nginx-tg-arn>
 
-  (Screenshot)
-(screenshot)
-(screenshot)
+![(Screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/nginx%20asg.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/nginx%20asg1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/nginx%20asg2.PNG)
 
 WordPress ASG:
 
@@ -709,11 +710,11 @@ aws autoscaling create-auto-scaling-group \
   --health-check-grace-period 300 \
   --target-group-arns <wordpress-tg-arn>
 
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/WordPress%20ASG.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/WordPress%20ASG1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/WordPress%20ASG2.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/WordPress%20ASG3.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/WordPress%20ASG4.PNG)
 
 After the above following the above screenshots, the proceed to review and create the wordpress ASG
 
@@ -746,10 +747,10 @@ aws autoscaling create-auto-scaling-group \
   --health-check-grace-period 300 \
   --target-group-arns <tooling-tg-arn>
 
-(screenshot)
-(screenshot)
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/tooling%20asg.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/tooling%20asg1.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/tooling%20asg2.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/tooling%20asg3.PNG)
 
 
 ### DNS Configuration with Route 53
@@ -767,7 +768,7 @@ Create an alias record for the root domain and direct its traffic to the ALB DNS
 Set Up DNS Records for Websites:
 
 Config info:
-
+```
 DNS Records:
   - Name: wordpress.taiwo.ip-ddns.com
     Type: A
@@ -828,6 +829,7 @@ dns-records.json:
     }
   ]
 }
+```
 Navigate to Route53 -> Hosted Zones -> Your hosted zone name -> Create record
 
 💡 Best Practices:
@@ -840,12 +842,12 @@ Consistent Naming Conventions: Maintain clear and consistent DNS naming for easi
 Incorrect Hosted Zone IDs: Ensure that the AliasTarget HostedZoneId matches the ALB's hosted zone.
 Propagation Delays: Allow time for DNS changes to propagate globally before verifying accessibility.
 
-(screenshot)
-(screenshot)
-(screenshot)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/our%20word%20press%20website.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/our%20website.PNG)
+![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/our%20wbesite.PNG)
 
 The end of Project 15
 In this project We have just created a secured, scalable and cost-effective infrastructure to host 2 enterprise websites using various Cloud services from AWS. At this point, your infrastructure is ready to host real websites’ load. Since it is a pretty expensive infrastructure to keep it up and running, we are going to start using Infrastructure as Code tool Terraform to easily provision and destroy this set up.
 
-Conclusion
+### Conclusion
 This AWS cloud solution effectively hosts two company-owned websites by utilizing solid architecture designs, automation, and security best practices. Once you have implemented multi-Availability Zone deployments, reverse proxy configurations with NGINX, and secure database management with Amazon RDS, the infrastructure ensures high availability, scalability, and security. Continuous monitoring and maintenance will further reinforce the reliability and performance of the deployed services, thereby positioning the company for sustained operational excellence.
