@@ -392,7 +392,7 @@ Ensure that it listens on HTTPS protocol (TCP port 443)
 Ensure the ALB is created within the appropriate VPC | AZ | Subnets
 Choose the Certificate from ACM
 Select Security Group
-Select Nginx Instances as the target group
+Select or create target group Nginx Instances as the target group
 
 Navigate to EC2 -> Load balancers -> Create load balancer -> Application load balancer and apply the configurations like so:
 ![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Create%20an%20Internet%20facing%20ALB.PNG)
@@ -414,7 +414,7 @@ Ensure that it listens on HTTPS protocol (TCP port 443)
 Ensure the ALB is created within the appropriate VPC | AZ | Subnets
 Choose the Certificate from ACM
 Select Security Group
-Select webserver Instances as the target group
+Select or create target group webserver Instances as the target group
 Ensure that health check passes for the target group
 Note: This process must be repeated for both WordPress and Tooling websites.
 
@@ -429,7 +429,7 @@ Ensure you are Navigated to EC2 -> Load balancers -> Create load balancer -> App
 ![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Configure%20Internal%20ALB5.PNG)
 ![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/Configure%20Internal%20ALB6.PNG)
 
-💡 Tip: Use host-based routing to direct traffic to the appropriate target groups based on the requested hostname.
+💡 Tip: Use host-based routing to direct traffic to the appropriate or created target groups based on the requested hostname.
 
 The default target configured on the listener while creating the internal load balancer is configured to forward traffic to wordpress on port 443. Now, we need to create a rule to route traffic to tooling as well.
 
@@ -447,7 +447,7 @@ Select the listener - HTTPS:443 - and click Manage rules -> Add rule -> Add Cond
 
 4. Configure the Rule:
 
-Choose the appropriate target group for the hostname.
+Choose the appropriate or create target group for the hostname.
 Select the priority for the rule.
 
 ![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/create%20a%20rule%20to%20route%20traffic%20to%20tooling2.PNG)
@@ -476,3 +476,376 @@ Provision EC2 Instances for NGINX, Bastion, and Webservers
 sudo yum update -y
 sudo yum install -y nginx
 # Additional installation commands
+```
+User Data Configuration
+Navigate to: EC2 -> Lauch Templates -> Create Launch Template, and follow the configurations you see in the screenshot below:
+
+(screenshot)
+(screenshot)
+(Screenshot)
+(screenshot)
+
+Repeat the above steps to create the Bastion-Template, the only thing you will have to do differently when configuring the Bastion-Template Launch Template is to set the AMI to Bastion AMI and configure the User data field differently as shown in the screenshot below:
+
+(screenshot)
+
+WordPress User Data:
+
+Before we jump into configuring the templates for our webserver instances (Wordpress and Tooling), we have to do some home-keeping. The webserver instances needs to communicate with the database and efs, and as such we need to configure the database and make it ready to attend to such requests it is about to get without spewing out errors.
+
+Navigate to your terminal, connect to the bastion instance, and jump from there to your webserver instance. Now log into your RDS database like so:
+mysql -h <the end point of your rds instance> -u admin (or the name of your configured user) -p 
+Create some databases (wordpressdb and toolingdb) as shown in the screenshot:
+
+(Screenshot)
+
+Now create a user and grant this user access to the databases
+
+(screenshot)
+
+Now we are done with setting up the foundation, now Lets Create AMIs from EC2 Instances and configure our remaining Launch Template 
+
+Create AMIs from EC2 Instances
+Create an AMI for Bastion Hosts:
+
+Navigate to `EC2 -> instances -> right-click on an instance and select Image and templates -> Create image (see screenshot for context)
+
+(screenshot)
+
+Create an AMI for NGINX Servers:
+
+(screenshot)
+
+Create an AMI for Webservers:
+
+(screenshot)
+
+View All AMIs:
+
+(screenshot)
+
+
+now it's time for configuring the Launch Template for Wordpress. Navigate to EC2 -> Launch templates -> Create launch template. Follow the steps we observed in creating the preivious lauch template, only that the AMI to use here would be your Webserver-AMI and not the Nginx-AMI we used in the 1st launch template created. Also, the user data configuration script would greatly differ this time around to look like this:
+
+#!/bin/bash
+
+sudo mount -t efs -o tls,accesspoint=fsap-095eef60db83a501b fs-0dbd247de4bf9b340:/ /var/www/
+
+yum install -y httpd
+systemctl start httpd
+systemctl enable httpd
+
+yum module reset php -y
+yum module enable php:remi-7.4 -y
+
+yum install -y php php-common php-mbstring php-opcache php-intl php-xml php-gd php-curl php-mysqlnd php-fpm php-json wget
+
+systemctl start php-fpm
+systemctl enable php-fpm
+
+wget http://wordpress.org/latest.tar.gz
+
+tar xzvf latest.tar.gz
+rm -rf latest.tar.gz
+
+cp wordpress/wp-config-sample.php wordpress/wp-config.php
+mkdir /var/www/html/
+cp -R /wordpress/* /var/www/html/
+cd /var/www/html/
+touch healthstatus
+
+sed -i "s/localhost/database-1.cqduk2gi2dkw.us-east-1.rds.amazonaws.com/g" wp-config.php
+sed -i "s/username_here/Taiwo/g" wp-config.php
+sed -i "s/password_here/Taiwoboy123/g" wp-config.php
+sed -i "s/database_name_here/wordpressdb/g" wp-config.php
+
+chcon -t httpd_sys_rw_content_t /var/www/html/ -R
+
+systemctl restart httpd
+⚠️ Important: The command for attaching the mountpoint (sudo mount -t efs ...) for your specific efs can be gotten from going to Amazon EFS -> Access Points -> Your Access Point -> Attach. And also, your rds endpoint value can be gotten from going to RDS -> Databases -> Your database name -> Connectivity & Security -> Endpoint & Port -> Endpoint
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+
+### Tooling User Data:
+
+#!/bin/bash
+
+mkdir /var/www/
+
+sudo mount -t efs -o tls,accesspoint=fsap-095eef60db83a501b fs-0dbd247de4bf9b340:/ /var/www/
+
+yum install -y httpd
+systemctl start httpd
+systemctl enable httpd
+
+yum module reset php -y
+yum module enable php:remi-7.4 -y
+
+yum install -y php php-common php-mbstring php-opcache php-intl php-xml php-gd php-curl php-mysqlnd php-fpm php-json
+
+systemctl start php-fpm
+systemctl enable php-fpm
+
+git clone https://github.com/Prince-Tee/tooling.git
+
+mkdir /var/www/html
+cp -R /tooling/html/*  /var/www/html/
+cd /tooling
+
+mysql -h database-1.cqduk2gi2dkw.us-east-1.rds.amazonaws.com -u admin -p toolingdb < tooling-db.sql
+
+cd /var/www/html/
+touch healthstatus
+
+sed -i "s/$db = mysqli_connect('10.0.1.138', 'admin', 'admin', 'tooling');/$db = mysqli_connect('database-1.cqduk2gi2dkw.us-east-1.rds.amazonaws.com', 'Taiwo', 'Taiwoboy123', 'toolingdb');/g" functions.php
+
+chcon -t httpd_sys_rw_content_t /var/www/html/ -R
+
+mv /etc/httpd/conf.d/welcome.conf /etc/httpd/conf.d/welcome.conf_backup
+
+systemctl restart httpd
+
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+
+### Auto Scaling Groups Configuration
+ Set Up Auto Scaling Groups (ASGs)
+Bastion Hosts ASG:
+
+Config info:
+
+Bastion-ASG Configuration:
+  Name: Bastion-ASG
+  Launch Template: Bastion-Launch-Template
+  VPC: Production-VPC
+  Subnets: Public-AZ1, Public-AZ2
+  Desired Capacity: 2
+  Min Size: 2
+  Max Size: 4
+  Scaling Policy:
+    - Metric: CPU Utilization
+      Threshold: 90%
+      Adjustment: +1
+  Health Checks:
+    - Type: EC2
+aws autoscaling create-auto-scaling-group \
+  --auto-scaling-group-name Bastion-ASG \
+  --launch-template LaunchTemplateName=Bastion-Launch-Template,Version=1 \
+  --vpc-zone-identifier "<public-subnet-az1-id>,<public-subnet-az2-id>" \
+  --min-size 2 \
+  --max-size 4 \
+  --desired-capacity 2 \
+  --health-check-type EC2 \
+  --target-group-arns <bastion-tg-arn>
+
+ Attach scaling policies as needed
+
+ (screenshot)
+(screenshot)
+
+NGINX ASG:
+
+Config info:
+
+NGINX-ASG Configuration:
+  Name: NGINX-ASG
+  Launch Template: NGINX-Launch-Template
+  VPC: Production-VPC
+  Subnets: Public-AZ1, Public-AZ2
+  Desired Capacity: 2
+  Min Size: 2
+  Max Size: 4
+  Scaling Policy:
+    - Metric: CPU Utilization
+      Threshold: 90%
+      Adjustment: +1
+  Health Checks:
+    - Type: ELB
+aws autoscaling create-auto-scaling-group \
+  --auto-scaling-group-name NGINX-ASG \
+  --launch-template LaunchTemplateName=NGINX-Launch-Template,Version=1 \
+  --vpc-zone-identifier "<private-subnet-az1-id>,<private-subnet-az2-id>" \
+  --min-size 2 \
+  --max-size 4 \
+  --desired-capacity 2 \
+  --health-check-type ELB \
+  --health-check-grace-period 300 \
+  --target-group-arns <nginx-tg-arn>
+
+  (Screenshot)
+(screenshot)
+(screenshot)
+
+WordPress ASG:
+
+Config info:
+
+WordPress-ASG Configuration:
+  Name: WordPress-ASG
+  Launch Template: WordPress-Launch-Template
+  VPC: Production-VPC
+  Subnets: Private-AZ1, Private-AZ2
+  Desired Capacity: 2
+  Min Size: 2
+  Max Size: 4
+  Scaling Policy:
+    - Metric: CPU Utilization
+      Threshold: 90%
+      Adjustment: +1
+  Health Checks:
+    - Type: ELB
+aws autoscaling create-auto-scaling-group \
+  --auto-scaling-group-name WordPress-ASG \
+  --launch-template LaunchTemplateName=WordPress-Launch-Template,Version=1 \
+  --vpc-zone-identifier "<private-subnet-az1-id>,<private-subnet-az2-id>" \
+  --min-size 2 \
+  --max-size 4 \
+  --desired-capacity 2 \
+  --health-check-type ELB \
+  --health-check-grace-period 300 \
+  --target-group-arns <wordpress-tg-arn>
+
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+
+After the above following the above screenshots, the proceed to review and create the wordpress ASG
+
+Tooling ASG:
+
+Config info:
+
+Tooling-ASG Configuration:
+  Name: Tooling-ASG
+  Launch Template: Tooling-Launch-Template
+  VPC: Production-VPC
+  Subnets: Private-AZ1, Private-AZ2
+  Desired Capacity: 2
+  Min Size: 2
+  Max Size: 4
+  Scaling Policy:
+    - Metric: CPU Utilization
+      Threshold: 90%
+      Adjustment: +1
+  Health Checks:
+    - Type: ELB
+aws autoscaling create-auto-scaling-group \
+  --auto-scaling-group-name Tooling-ASG \
+  --launch-template LaunchTemplateName=Tooling-Launch-Template,Version=1 \
+  --vpc-zone-identifier "<private-subnet-az1-id>,<private-subnet-az2-id>" \
+  --min-size 2 \
+  --max-size 4 \
+  --desired-capacity 2 \
+  --health-check-type ELB \
+  --health-check-grace-period 300 \
+  --target-group-arns <tooling-tg-arn>
+
+(screenshot)
+(screenshot)
+(screenshot)
+(screenshot)
+
+
+### DNS Configuration with Route 53
+You remembered when we registered a free domain with Cloudns and configured a hosted zone in Route53. But that is not all that needs to be done as far as DNS configuration is concerned.
+
+We need to ensure that the main domain for the WordPress website can be reached, and the subdomain for Tooling website can also be reached using a browser.
+
+Create other records such as CNAME, alias and A records.
+
+NOTE: You can use either CNAME or alias records to achieve the same thing. But alias record has better functionality because it is a faster to resolve DNS record, and can coexist with other records on that name. Read here to get to know more about the differences.
+
+Create an alias record for the root domain and direct its traffic to the ALB DNS name. Create an alias record for tooling.fncloud.dns-dynamic.net and direct its traffic to the ALB DNS name.
+
+14. Configure DNS Records
+Set Up DNS Records for Websites:
+
+Config info:
+
+DNS Records:
+  - Name: wordpress.taiwo.ip-ddns.com
+    Type: A
+    Alias: Yes
+    Alias Target: External-ALB DNS
+
+  - Name: tooling.taiwo.ip-ddns.com
+    Type: A
+    Alias: Yes
+    Alias Target: External-ALB DNS
+
+  - Name: www.taiwo.ip-ddns.com
+    Type: CNAME
+    Value: taiwo.ip-ddns.com
+aws route53 change-resource-record-sets \
+  --hosted-zone-id <hosted-zone-id> \
+  --change-batch file://dns-records.json
+dns-records.json:
+
+{
+  "Changes": [
+    {
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "wordpress.taiwo.ip-ddns.com",
+        "Type": "A",
+        "AliasTarget": {
+          "HostedZoneId": "<ALB-hosted-zone-id>",
+          "DNSName": "external-alb-dns-name",
+          "EvaluateTargetHealth": false
+        }
+      }
+    },
+    {
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "tooling.taiwo.ip-ddns.com",
+        "Type": "A",
+        "AliasTarget": {
+          "HostedZoneId": "<ALB-hosted-zone-id>",
+          "DNSName": "external-alb-dns-name",
+          "EvaluateTargetHealth": false
+        }
+      }
+    },
+    {
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "www.taiwo.ip-ddns.com",
+        "Type": "CNAME",
+        "TTL": 300,
+        "ResourceRecords": [
+          {
+            "Value": "taiwo.ip-ddns.com"
+          }
+        ]
+      }
+    }
+  ]
+}
+Navigate to Route53 -> Hosted Zones -> Your hosted zone name -> Create record
+
+💡 Best Practices:
+
+Use Alias Records: Prefer alias records over CNAMEs for root domains to optimize DNS resolution.
+Implement Multi-AZ DNS Failover: Configure Route 53 health checks to route traffic only to healthy endpoints.
+Consistent Naming Conventions: Maintain clear and consistent DNS naming for easier management.
+⚠️ Common Issues:
+
+Incorrect Hosted Zone IDs: Ensure that the AliasTarget HostedZoneId matches the ALB's hosted zone.
+Propagation Delays: Allow time for DNS changes to propagate globally before verifying accessibility.
+
+(screenshot)
+(screenshot)
+(screenshot)
+
+The end of Project 15
+In this project We have just created a secured, scalable and cost-effective infrastructure to host 2 enterprise websites using various Cloud services from AWS. At this point, your infrastructure is ready to host real websites’ load. Since it is a pretty expensive infrastructure to keep it up and running, we are going to start using Infrastructure as Code tool Terraform to easily provision and destroy this set up.
+
+Conclusion
+This AWS cloud solution effectively hosts two company-owned websites by utilizing solid architecture designs, automation, and security best practices. Once you have implemented multi-Availability Zone deployments, reverse proxy configurations with NGINX, and secure database management with Amazon RDS, the infrastructure ensures high availability, scalability, and security. Continuous monitoring and maintenance will further reinforce the reliability and performance of the deployed services, thereby positioning the company for sustained operational excellence.
