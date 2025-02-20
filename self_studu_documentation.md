@@ -1,3 +1,58 @@
+Here are additional issues you could have encountered, along with relevant platform links for t
+### **🔴 Potential Issues & Troubleshooting Resources**  
+
+1️⃣ **Permission Denied (publickey) when SSH-ing into Bastion or Web Server**  
+   - Issue: Incorrect file permissions or missing key.  
+   - Fix: Ensure the PEM file has the correct permissions:  
+     ```bash
+     chmod 400 ~/web.pem
+     ```  
+   - 📌 **AWS Docs:** [Troubleshooting SSH Issues](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/TroubleshootingInstancesConnecting.html)  
+
+2️⃣ **SCP Fails Due to Incorrect Path or Key File**  
+   - Issue: SCP may not work if the local path is incorrect.  
+   - Fix: Double-check the file path and ensure the key exists:  
+     ```bash
+     ls -l ~/downloads/web.pem
+     ```  
+   - 📌 **Stack Overflow:** [Fixing SCP Transfer Errors](https://stackoverflow.com/questions/tagged/scp)  
+
+3️⃣ **Bastion Host Unable to Reach Private Instances**  
+   - Issue: Security Group or VPC settings may block access.  
+   - Fix:  
+     - Ensure the **Bastion Security Group** allows inbound SSH from your local IP.  
+     - Verify the **Web Server Security Group** allows SSH from the Bastion’s **Private IP** (not Public).  
+   - 📌 **AWS Docs:** [EC2 Security Groups Guide](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/security-group-rules-reference.html)  
+
+4️⃣ **EC2 Instances Not Responding Even After SSH Connection**  
+   - Issue: The instance may be in a stopped state, or there's an issue with the network.  
+   - Fix: Check EC2 instance status in AWS Console and restart if necessary.  
+   - 📌 **AWS Forum:** [Instance Not Responding](https://repost.aws/t/ec2-instance-not-responding-to-ssh)  
+
+5️⃣ **Connection Timeout While SSH-ing into Private Server from Bastion**  
+   - Issue: The instance is unreachable due to missing routes in the VPC.  
+   - Fix:  
+     - Ensure the private subnet **has a route to the Bastion Host**.  
+     - Verify **NACL rules** allow inbound SSH traffic.  
+   - 📌 **AWS VPC Guide:** [Troubleshooting VPC Connectivity](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenarios.html)  
+
+6️⃣ **SSH Agent Forwarding Not Working**  
+   - Issue: Agent forwarding isn’t enabled or `ssh-add` failed.  
+   - Fix:  
+     ```bash
+     ssh-add -l  # Check if key is added
+     ```  
+   - 📌 **Linux SSH Agent Troubleshooting:** [SSH Agent Guide](https://linux.die.net/man/1/ssh-agent)  
+
+7️⃣ **EC2 Metadata Service Unreachable**  
+   - Issue: If you’re using scripts relying on metadata (e.g., IAM role credentials), they may fail.  
+   - Fix: Ensure you’re using IMDSv2 correctly:  
+     ```bash
+     curl -H "X-aws-ec2-metadata-token: $(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")" -v http://169.254.169.254/latest/meta-data/
+     ```  
+   - 📌 **AWS Metadata Guide:** [EC2 Instance Metadata](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html)  
+
+---
 
 ## **🔷 Step 2: Transfer the PEM Key to the Bastion Host**
 Since our servers require authentication via the PEM key (`web.pem`), you need to copy it to the Bastion Host.
