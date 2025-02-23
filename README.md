@@ -466,7 +466,7 @@ Security Group Restrictions: Confirm ALBs can communicate with their target grou
 ![(screenshot)](https://github.com/Prince-Tee/AWS_CloudSolutionFor2CompanyWebsites/blob/main/Sreenshots%20from%20my%20local%20env/create%20a%20rule%20to%20route%20traffic%20to%20tooling5.PNG)
 
 Configure Listener Rules for Internal ALB:
-The default target is WordPress. Add rules to route tooling.kosenuel.ip-ddns.com to the Tooling target group.
+The default target is WordPress. Add rules to route tooling.taiwo.ip-ddns.com to the Tooling target group.
 
 ### Compute Resources Setup
 Provision EC2 Instances for NGINX, Bastion, and Webservers
